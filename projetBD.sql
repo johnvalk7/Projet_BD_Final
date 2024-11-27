@@ -5,7 +5,6 @@
 
 -- -----------------------------------------------------------------------
 
-
 -- 3)  Création des tables
 
 -- Client
@@ -57,7 +56,7 @@ CREATE TABLE Inscription (
 -- -*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-**-*-*-*-*-*-*
 
 -- -----------------------------------------------------------------------
--- 3) Déclancheurs
+-- 3) Déclencheurs
 
 
 
@@ -80,7 +79,7 @@ CREATE TRIGGER num_client_generator
 
 CREATE TRIGGER nombre_place_dispo_before_insert
     BEFORE INSERT ON inscription
-    FOR EACH ROW
+    FOR EACH ROW 'à modifier' !!!
     BEGIN
         UPDATE seances SET place_disponible =  place_disponible-1 WHERE id_seance = Id ;
     end;
@@ -93,6 +92,10 @@ INSERT INTO Seances (date, heure, place_disponible, place_maximum, nom_activiter
 -- 3.3) Créer un déclencheur qui permet d’insérer les participants dans une séance si le
 -- nombre de places maximum n’est pas atteint. Sinon, il affiche un message d’erreur
 -- avisant qu’il ne reste plus de places disponibles pour la séance choisie
+
+
+CREATE TRIGGER insert_participant_seance_si_maximum_place_atteint;
+
 
 -- 3.4) Vous pouvez ajouter tout autre déclencheur que vous jugez pertinent pour le
 -- fonctionnement de la BDD. Justifiez votre choix.
