@@ -305,7 +305,32 @@ CREATE VIEW nb_moyen_participant_par_mois;
 -- effectuer pour votre application
 
 -- 1)
-CREATE PROCEDURE ;
+DELIMITER //
+CREATE FUNCTION SeancesPopulaires(note_min DECIMAL(3, 2))
+RETURNS TEXT
+DETERMINISTIC
+BEGIN
+    DECLARE result TEXT;
+
+
+    SET result = '';
+
+    -- stocker dans la variable result
+    SELECT GROUP_CONCAT(DISTINCT CONCAT(nom_activite, ' (Note : ', avg_rating, ')') SEPARATOR ', ')
+    INTO result
+    FROM (
+        SELECT nom_activite, AVG(rating) AS avg_rating
+        FROM Seances
+        JOIN Inscription ON Seances.Id = Inscription.id_seance
+        GROUP BY nom_activite
+        HAVING avg_rating >= note_min
+    ) AS subquery;
+
+
+    RETURN result;
+END;
+//
+DELIMITER ;
 
 -- 2)
 CREATE PROCEDURE ;
@@ -326,7 +351,34 @@ CREATE PROCEDURE ;
 -- effectuer pour votre application,
 
 -- 1)
-CREATE FUNCTION ;
+-- function pour afficher un string des activiter qui on une moyenne de note surperieur a L'input
+-- la function prend un decimal en paramettre qui est le minimum de la note moyenne voulue.
+DELIMITER //
+CREATE FUNCTION SeancesPopulaires(note_min DECIMAL(3, 2))
+RETURNS TEXT
+DETERMINISTIC
+BEGIN
+    DECLARE result TEXT;
+
+
+    SET result = '';
+
+    -- stocker dans la variable result
+    SELECT GROUP_CONCAT(DISTINCT CONCAT(nom_activite, ' (Note : ', avg_rating, ')') SEPARATOR ', ')
+    INTO result
+    FROM (
+        SELECT nom_activite, AVG(rating) AS avg_rating
+        FROM Seances
+        JOIN Inscription ON Seances.Id = Inscription.id_seance
+        GROUP BY nom_activite
+        HAVING avg_rating >= note_min
+    ) AS subquery;
+
+
+    RETURN result;
+END;
+//
+DELIMITER ;
 
 -- 2)
 CREATE FUNCTION ;
