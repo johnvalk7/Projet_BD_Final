@@ -32,8 +32,8 @@ CREATE TABLE Seances (
                          heure TIME NOT NULL,
                          place_disponible INT NOT NULL,
                          place_maximum INT NOT NULL,
-                         nom_activiter VARCHAR(100),
-                         FOREIGN KEY (nom_activiter) REFERENCES Activites(nom)
+                         nom_activite VARCHAR(100),
+                         FOREIGN KEY (nom_activite) REFERENCES Activites(nom)
                              ON DELETE SET NULL
                              ON UPDATE CASCADE
 );
@@ -43,7 +43,7 @@ CREATE TABLE Inscription (
                              Id INT AUTO_INCREMENT PRIMARY KEY,
                              id_clients VARCHAR(100) NOT NULL,
                              id_seance INT NOT NULL,
-                             raiting INT,
+                             rating INT,
                              FOREIGN KEY (id_clients) REFERENCES Clients(Id)
                                  ON DELETE CASCADE
                                  ON UPDATE CASCADE,
@@ -197,7 +197,7 @@ INSERT INTO Activites (nom, type, prix_organisation, prix_clients) VALUES
 ('Atelier Photo', 'Techno', 7.00, 16.00);
 
 -- seances
-INSERT INTO Seances (date, heure, place_disponible, place_maximum, nom_activiter) VALUES
+INSERT INTO Seances (date, heure, place_disponible, place_maximum, nom_activite) VALUES
 ('2024-12-01', '10:00:00', 12, 20, 'Cours de Zumba'),
 ('2024-12-01', '15:00:00', 10, 20, 'Cours de Zumba'),
 ('2024-12-01', '18:30:00', 8, 20, 'Cours de Zumba'),
@@ -256,7 +256,6 @@ INSERT INTO Inscription (id_clients, id_seance, rating) VALUES
 ('WA-1968-744', 10, 1);
 
 
-
 -- -----------------------------------------------------------------------
 
 -- 5) Les vues
@@ -268,34 +267,86 @@ INSERT INTO Inscription (id_clients, id_seance, rating) VALUES
 -- • Trouver le participant ayant le nombre de séances le plus élevé
 CREATE VIEW participant_Plus_Grand_nb_Sceance AS
 SELECT
-    i.id_participant,
-    CONCAT(p.nom, ' ', p.prenom) AS nom_complet,
+    i.id_clients AS id_participant,
+    CONCAT(c.nom, ' ', c.prenom) AS nom_complet,
     COUNT(i.id_seance) AS nb_seances
-FROM inscription i JOIN participants p ON i.id_participant = p.id_participant
-GROUP BY i.id_participant, p.nom, p.prenom
-HAVING COUNT(i.id_seance) = (SELECT MAX(total_seances)
-        FROM (
-            SELECT COUNT(id_seance) AS total_seances
-            FROM inscription
-            GROUP BY id_participant
-        ) AS sous_requete
-    );
-
+FROM Inscription i
+JOIN Clients c ON i.id_clients = c.Id
+GROUP BY i.id_clients, c.nom, c.prenom
+HAVING COUNT(i.id_seance) = (
+    SELECT MAX(total_seances)
+    FROM (
+        SELECT COUNT(id_seance) AS total_seances
+        FROM Inscription
+        GROUP BY id_clients
+    ) AS sous_requete
+);
 
 -- • Trouver le prix moyen par activité pour chaque participant
-CREATE  VIEW prix_moyen_activité;
+CREATE VIEW prix_moyen_activite AS
+SELECT
+    i.id_clients AS id_participant,
+    CONCAT(c.nom, ' ', c.prenom) AS nom_complet,
+    s.nom_activite,
+    AVG(a.prix_clients) AS prix_moyen
+FROM Inscription i
+JOIN Seances s ON i.id_seance = s.Id
+JOIN Activites a ON s.nom_activite = a.nom
+JOIN Clients c ON i.id_clients = c.Id
+GROUP BY i.id_clients, c.nom, c.prenom, s.nom_activite;
+
 
 -- • Afficher les notes d’appréciation pour chaque activité
-CREATE VIEW note_appreciation;
+CREATE VIEW note_appreciation AS
+SELECT
+    a.nom AS nom_activite,
+    s.Id AS id_seance,
+    CONCAT(c.nom, ' ', c.prenom) AS participant,
+    i.rating AS note_appreciation
+FROM Inscription i
+JOIN Seances s ON i.id_seance = s.Id
+JOIN Activites a ON s.nom_activite = a.nom
+JOIN Clients c ON i.id_clients = c.Id
+WHERE i.rating IS NOT NULL;
 
 -- • Affiche la moyenne des notes d’appréciations pour toutes les activités
-CREATE VIEW moyenne_note_activite;
+CREATE VIEW moyenne_note_activite AS
+SELECT
+    a.nom AS nom_activite,
+    AVG(i.rating) AS moyenne_note
+FROM Inscription i
+JOIN Seances s ON i.id_seance = s.Id
+JOIN Activites a ON s.nom_activite = a.nom
+WHERE i.rating IS NOT NULL
+GROUP BY a.nom;
 
 -- • Afficher le nombre de participant pour chaque activité
-CREATE VIEW nb_participant activité;
+CREATE VIEW nb_participant_activite AS
+SELECT
+    a.nom AS nom_activite,
+    COUNT(DISTINCT i.id_clients) AS nombre_participants
+FROM Inscription i
+JOIN Seances s ON i.id_seance = s.Id
+JOIN Activites a ON s.nom_activite = a.nom
+GROUP BY a.nom;
 
 -- • Afficher le nombre de participant moyen pour chaque mois
-CREATE VIEW nb_moyen_participant_par_mois;
+CREATE VIEW nb_moyen_participant_par_mois AS
+SELECT
+    MONTH(participants_par_seance.date) AS mois,
+    YEAR(participants_par_seance.date) AS annee,
+    AVG(participants_par_seance.nb_participants) AS nb_moyen_participants
+FROM (
+    SELECT
+        s.Id AS id_seance,
+        COUNT(DISTINCT i.id_clients) AS nb_participants,
+        s.date
+    FROM Inscription i
+    JOIN Seances s ON i.id_seance = s.Id
+    GROUP BY s.Id, s.date
+) AS participants_par_seance
+GROUP BY YEAR(participants_par_seance.date), MONTH(participants_par_seance.date)
+ORDER BY annee, mois;
 
 
 -- -----------------------------------------------------------------------
@@ -332,17 +383,112 @@ END;
 //
 DELIMITER ;
 
--- 2)
-CREATE PROCEDURE ;
+-- 2) Ajouter un participant à une séance
 
--- 3)
-CREATE PROCEDURE ;
+DELIMITER //
 
--- 4)
-CREATE PROCEDURE ;
+CREATE PROCEDURE ajouter_participant_seance(
+    IN id_client VARCHAR(100),
+    IN id_seance INT
+)
+BEGIN
+    -- Ajouter le participant à la séance
+    INSERT INTO Inscription (id_clients, id_seance)
+    VALUES (id_client, id_seance);
 
--- 5)
-CREATE PROCEDURE ;
+    SELECT 'Participant ajouté avec succès.' AS message;
+END //
+
+DELIMITER ;
+
+-- 3) Supprimer un participant d'une seance
+DELIMITER //
+
+CREATE PROCEDURE supprimer_participant_seance(
+    IN id_client VARCHAR(100),
+    IN id_seance INT
+)
+BEGIN
+    -- Supprimer l'inscription du participant
+    DELETE FROM Inscription
+    WHERE id_clients = id_client AND id_seance = id_seance;
+
+    -- Mettre à jour le nombre de places disponibles
+    UPDATE Seances
+    SET place_disponible = place_disponible + 1
+    WHERE Id = id_seance;
+
+    SELECT 'Participant supprimé avec succès.' AS message;
+END //
+
+DELIMITER ;
+
+-- 4) Créer une nouvelle séance pour une activité donnée
+DELIMITER //
+
+CREATE PROCEDURE creer_seance(
+    IN date_seance DATE,
+    IN heure_seance TIME,
+    IN nom_activite VARCHAR(100),
+    IN place_maximum INT
+)
+BEGIN
+    DECLARE place_disponible INT;
+
+    -- Définir le nombre de places disponibles
+    SET place_disponible = place_maximum;
+
+    -- Insérer la nouvelle séance
+    INSERT INTO Seances (date, heure, place_disponible, place_maximum, nom_activite)
+    VALUES (date_seance, heure_seance, place_disponible, place_maximum, nom_activite);
+
+    SELECT 'Séance créée avec succès.' AS message;
+END //
+
+DELIMITER ;
+
+-- 5) Calculer le revenu généré par une activité
+DELIMITER //
+
+CREATE PROCEDURE calculer_revenu_activite(
+    IN nom_activite VARCHAR(100)
+)
+BEGIN
+    DECLARE revenu DECIMAL(10, 2);
+
+    -- Calculer le revenu pour l'activité donnée
+    SELECT SUM(a.prix_clients) INTO revenu
+    FROM Inscription i
+    JOIN Seances s ON i.id_seance = s.Id
+    JOIN Activites a ON s.nom_activite = a.nom
+    WHERE a.nom = nom_activite;
+
+    IF revenu IS NULL THEN
+        SET revenu = 0;
+    END IF;
+
+    SELECT CONCAT('Revenu total généré par l\'activité ', nom_activite, ' : ', revenu) AS message;
+END //
+DELIMITER ;
+
+
+-- 6) 
+      DELIMITER //
+
+CREATE PROCEDURE mettre_a_jour_adresse_participant(
+    IN id_client VARCHAR(100),
+    IN nouvelle_adresse TEXT
+)
+BEGIN
+    -- Mettre à jour l'adresse du participant
+    UPDATE Clients
+    SET adresse = nouvelle_adresse
+    WHERE Id = id_client;
+
+    SELECT 'Adresse mise à jour avec succès.' AS message;
+END //
+
+DELIMITER ;
 
 -- -----------------------------------------------------------------------
 
@@ -398,7 +544,7 @@ CREATE FUNCTION ;
 -- • Afficher des messages d’erreurs pour gérer certains conflits dans la BDD (signal,
 -- etc. voir dernier chapitre du cours). Utilisez au moins 3 codes d’erreurs différents.
 
--- 1)
+-- 1) 45000 à été utilisé dans un trigger
 
 -- 2)
 
