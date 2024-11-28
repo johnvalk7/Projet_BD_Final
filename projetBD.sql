@@ -1,7 +1,7 @@
 -- Noms : Yann Gervais-Ricard & Wylliam Jalbert-Létourneau
 -- Date de remise : 11-12-2024
 -- Sujet : Projet final de BD
--- Matricules : (Yann) 1970628 & (Wylliam)
+-- Matricules : (Yann) 1970628 & (Wylliam) 1286834
 
 -- -----------------------------------------------------------------------
 
@@ -179,10 +179,82 @@ insert into Clients (nom, prenom, adresse, date_naissance) values ('Aggi', 'Scof
 insert into Clients (nom, prenom, adresse, date_naissance) values ('Annmaria', 'Tutchell', '36 Farwell Drive', '1976-08-28');
 
 -- activité
-
--- Inscription
+INSERT INTO Activites (nom, type, prix_organisation, prix_clients) VALUES
+('Cours de Zumba', 'Fitness', 5.00, 12.00),
+('Atelier de Sculpture sur Bois', 'Artisanat', 8.00, 18.00),
+('Tournoi de Badminton', 'Sport', 4.00, 10.00),
+('Initiation au Théâtre', 'Culture', 7.50, 15.00),
+('Atelier de Bricolage', 'Créatif', 6.00, 14.00),
+('Soirée Karaoké', 'Divertissement', 4.50, 10.00),
+('Cours de Skateboard', 'Sport', 7.00, 15.00),
+('Atelier de Fabrication de Bijoux', 'Artisanat', 5.50, 12.00),
+('Tournoi de Jeu Vidéo', 'Techno', 6.00, 13.00),
+('Club de Modélisme', 'Créatif', 5.00, 11.00),
+('Atelier de Dessin Manga', 'Art', 6.50, 14.00),
+('Randonnée Guidée', 'Outdoor', 4.50, 10.00),
+('Cours d’Escalade', 'Sport', 8.00, 18.00),
+('Tournoi de Foot en Salle', 'Sport', 5.50, 12.00),
+('Atelier Photo', 'Techno', 7.00, 16.00);
 
 -- seances
+INSERT INTO Seances (date, heure, place_disponible, place_maximum, nom_activiter) VALUES
+('2024-12-01', '10:00:00', 12, 20, 'Cours de Zumba'),
+('2024-12-01', '15:00:00', 10, 20, 'Cours de Zumba'),
+('2024-12-01', '18:30:00', 8, 20, 'Cours de Zumba'),
+('2024-12-02', '14:00:00', 7, 10, 'Atelier de Sculpture sur Bois'),
+('2024-12-02', '18:00:00', 5, 10, 'Atelier de Sculpture sur Bois'),
+('2024-12-03', '09:30:00', 6, 12, 'Tournoi de Badminton'),
+('2024-12-03', '17:00:00', 8, 12, 'Tournoi de Badminton'),
+('2024-12-04', '13:00:00', 6, 12, 'Initiation au Théâtre'),
+('2024-12-04', '19:00:00', 4, 12, 'Initiation au Théâtre'),
+('2024-12-05', '10:30:00', 8, 10, 'Atelier de Bricolage'),
+('2024-12-05', '15:30:00', 6, 10, 'Atelier de Bricolage'),
+('2024-12-06', '19:00:00', 10, 15, 'Soirée Karaoké'),
+('2024-12-07', '09:30:00', 8, 12, 'Cours de Skateboard'),
+('2024-12-07', '14:30:00', 10, 12, 'Cours de Skateboard'),
+('2024-12-08', '10:00:00', 6, 8, 'Atelier de Fabrication de Bijoux'),
+('2024-12-08', '15:00:00', 5, 8, 'Atelier de Fabrication de Bijoux'),
+('2024-12-09', '18:30:00', 12, 20, 'Tournoi de Jeu Vidéo'),
+('2024-12-10', '11:00:00', 10, 15, 'Club de Modélisme'),
+('2024-12-10', '16:00:00', 7, 15, 'Club de Modélisme'),
+('2024-12-11', '10:00:00', 6, 10, 'Atelier de Dessin Manga'),
+('2024-12-11', '14:00:00', 8, 10, 'Atelier de Dessin Manga'),
+('2024-12-12', '09:30:00', 20, 25, 'Randonnée Guidée'),
+('2024-12-13', '09:00:00', 8, 15, 'Cours d’Escalade'),
+('2024-12-13', '13:30:00', 10, 15, 'Cours d’Escalade'),
+('2024-12-14', '10:00:00', 10, 12, 'Tournoi de Foot en Salle'),
+('2024-12-14', '18:00:00', 6, 12, 'Tournoi de Foot en Salle'),
+('2024-12-15', '09:00:00', 5, 10, 'Atelier Photo'),
+('2024-12-15', '15:00:00', 5, 10, 'Atelier Photo');
+
+-- Inscription
+INSERT INTO Inscription (id_clients, id_seance, rating) VALUES
+('AF-1984-668', 1, 4),
+('BA-2015-553', 2, 3),
+('BM-1964-805', 3, 5),
+('DB-2024-382', 4, 4),
+('DC-2021-424', 5, 3),
+('GL-1969-977', 6, 1),
+('KG-1961-891', 7, 5),
+('LA-1962-795', 8, 5),
+('LD-1989-241', 9, 3),
+('LG-2019-500', 10, 4),
+('LV-1962-317', 11, 2),
+('MA-1945-896', 12, 5),
+('MC-1981-560', 13, 4),
+('MT-1978-955', 14, 2),
+('OT-2013-794', 15, 3),
+('RE-2002-659', 1, 4),
+('SA-1963-995', 2, 5),
+('SA-2000-694', 3, 3),
+('SC-1972-881', 4, 4),
+('SV-1966-186', 5, 1),
+('TA-1976-383', 6, 4),
+('TB-1945-938', 7, 5),
+('TL-1955-671', 8, 3),
+('TS-1988-704', 9, 4),
+('WA-1968-744', 10, 1);
+
 
 
 -- -----------------------------------------------------------------------
