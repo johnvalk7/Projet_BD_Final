@@ -77,24 +77,51 @@ CREATE TRIGGER num_client_generator
 -- 3.2) Créer un déclencheur qui permet de gérer le nombre de places disponibles dans
 -- chaque séance. À chaque fois, on ajoute un participant, le nombre de places incrémente
 
+DELIMITER //
+
 CREATE TRIGGER nombre_place_dispo_before_insert
-    BEFORE INSERT ON inscription
-    FOR EACH ROW 'à modifier' !!!
-    BEGIN
-        UPDATE seances SET place_disponible =  place_disponible-1 WHERE id_seance = Id ;
-    end;
+BEFORE INSERT ON inscription
+FOR EACH ROW
+BEGIN
 
-DROP TRIGGER nombre_place_dispo_before_insert;
+    IF (SELECT place_disponible FROM seances WHERE id_seance = NEW.id_seance) <= 0 THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Il ne reste plus de places disponibles pour cette séance.';
+    ELSE
+        UPDATE seances
+        SET place_disponible = place_disponible - 1
+        WHERE id_seance = NEW.id_seance;
+    END IF;
+END //
 
-INSERT INTO Seances (date, heure, place_disponible, place_maximum, nom_activiter) VALUES
-('1990-01-01','19:30:10',1,40,'Lancer du nain');
+DELIMITER ;
+
 
 -- 3.3) Créer un déclencheur qui permet d’insérer les participants dans une séance si le
 -- nombre de places maximum n’est pas atteint. Sinon, il affiche un message d’erreur
 -- avisant qu’il ne reste plus de places disponibles pour la séance choisie
 
 
-CREATE TRIGGER insert_participant_seance_si_maximum_place_atteint;
+DELIMITER //
+
+CREATE TRIGGER verif_places_disponibles_before_insert
+BEFORE INSERT ON inscription
+FOR EACH ROW
+BEGIN
+    DECLARE nb_places_restantes INT;
+
+    SELECT place_disponible INTO nb_places_restantes
+    FROM seances
+    WHERE id_seance = NEW.id_seance;
+
+    IF nb_places_restantes <= 0 THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Erreur : Il ne reste plus de places disponibles pour cette séance.';
+    END IF;
+END //
+
+DELIMITER ;
+
 
 
 -- 3.4) Vous pouvez ajouter tout autre déclencheur que vous jugez pertinent pour le
@@ -167,7 +194,21 @@ insert into Clients (nom, prenom, adresse, date_naissance) values ('Annmaria', '
 
 
 -- • Trouver le participant ayant le nombre de séances le plus élevé
-CREATE VIEW participant_Plus_Grand_nb_Sceance;
+CREATE VIEW participant_Plus_Grand_nb_Sceance AS
+SELECT
+    i.id_participant,
+    CONCAT(p.nom, ' ', p.prenom) AS nom_complet,
+    COUNT(i.id_seance) AS nb_seances
+FROM inscription i JOIN participants p ON i.id_participant = p.id_participant
+GROUP BY i.id_participant, p.nom, p.prenom
+HAVING COUNT(i.id_seance) = (SELECT MAX(total_seances)
+        FROM (
+            SELECT COUNT(id_seance) AS total_seances
+            FROM inscription
+            GROUP BY id_participant
+        ) AS sous_requete
+    );
+
 
 -- • Trouver le prix moyen par activité pour chaque participant
 CREATE  VIEW prix_moyen_activité;
