@@ -355,35 +355,7 @@ ORDER BY annee, mois;
 -- • Faire des procédures stockées (au moins 5) pour automatiser certaines tâches à
 -- effectuer pour votre application
 
--- 1)
-DELIMITER //
-CREATE FUNCTION SeancesPopulaires(note_min DECIMAL(3, 2))
-RETURNS TEXT
-DETERMINISTIC
-BEGIN
-    DECLARE result TEXT;
-
-
-    SET result = '';
-
-    -- stocker dans la variable result
-    SELECT GROUP_CONCAT(DISTINCT CONCAT(nom_activite, ' (Note : ', avg_rating, ')') SEPARATOR ', ')
-    INTO result
-    FROM (
-        SELECT nom_activite, AVG(rating) AS avg_rating
-        FROM Seances
-        JOIN Inscription ON Seances.Id = Inscription.id_seance
-        GROUP BY nom_activite
-        HAVING avg_rating >= note_min
-    ) AS subquery;
-
-
-    RETURN result;
-END;
-//
-DELIMITER ;
-
--- 2) Ajouter un participant à une séance
+-- 1) Ajouter un participant à une séance
 
 DELIMITER //
 
@@ -401,7 +373,7 @@ END //
 
 DELIMITER ;
 
--- 3) Supprimer un participant d'une seance
+-- 2) Supprimer un participant d'une seance
 DELIMITER //
 
 CREATE PROCEDURE supprimer_participant_seance(
@@ -423,7 +395,7 @@ END //
 
 DELIMITER ;
 
--- 4) Créer une nouvelle séance pour une activité donnée
+-- 3) Créer une nouvelle séance pour une activité donnée
 DELIMITER //
 
 CREATE PROCEDURE creer_seance(
@@ -447,7 +419,7 @@ END //
 
 DELIMITER ;
 
--- 5) Calculer le revenu généré par une activité
+-- 4) Calculer le revenu généré par une activité
 DELIMITER //
 
 CREATE PROCEDURE calculer_revenu_activite(
@@ -472,7 +444,7 @@ END //
 DELIMITER ;
 
 
--- 6) 
+-- 5) 
       DELIMITER //
 
 CREATE PROCEDURE mettre_a_jour_adresse_participant(
@@ -500,7 +472,7 @@ DELIMITER ;
 -- function pour afficher un string des activiter qui on une moyenne de note surperieur a L'input
 -- la function prend un decimal en paramettre qui est le minimum de la note moyenne voulue.
 DELIMITER //
-CREATE FUNCTION SeancesPopulaires(note_min DECIMAL(3, 2))
+CREATE FUNCTION seances_populaires(note_min DECIMAL(3, 2))
 RETURNS TEXT
 DETERMINISTIC
 BEGIN
@@ -527,16 +499,88 @@ END;
 DELIMITER ;
 
 -- 2)
-CREATE FUNCTION ;
+-- Fonction qui prend en paramètre l'ID du client et retourne la moyenne des notes.
+DELIMITER //
+CREATE FUNCTION moyenne_notes_client(client_id VARCHAR(100))
+RETURNS DECIMAL(3, 2)
+DETERMINISTIC
+BEGIN
+    DECLARE avg_rating DECIMAL(3, 2);
+
+    SELECT AVG(rating)
+    INTO avg_rating
+    FROM Inscription
+    WHERE id_clients = client_id;
+
+    RETURN avg_rating;
+END;
+//
+DELIMITER ;
 
 -- 3)
-CREATE FUNCTION ;
+-- function pour sortir l'activité qui est le plus rentable.
+DELIMITER //
+CREATE FUNCTION activite_plus_rentable()
+RETURNS TEXT
+DETERMINISTIC
+BEGIN
+    DECLARE activite_rentable TEXT;
+
+    SELECT nom
+    INTO activite_rentable
+    FROM (
+        SELECT nom, SUM(prix_clients) AS total_revenue
+        FROM Activites
+        JOIN Seances ON Activites.nom = Seances.nom_activite
+        JOIN Inscription ON Seances.Id = Inscription.id_seance
+        GROUP BY nom
+        ORDER BY total_revenue DESC
+        LIMIT 1
+    ) AS subquery;
+
+    RETURN activite_rentable;
+END;
+//
+DELIMITER ;
+
 
 -- 4)
-CREATE FUNCTION ;
+-- Function pour retourner le nombres d'ativité d'un client
+DELIMITER //
+CREATE FUNCTION total_inscriptions_client(client_id VARCHAR(100))
+RETURNS INT
+DETERMINISTIC
+BEGIN
+    DECLARE total_inscriptions INT;
+
+    SELECT COUNT(*)
+    INTO total_inscriptions
+    FROM Inscription
+    WHERE id_clients = client_id;
+
+    RETURN total_inscriptions;
+END;
+//
+DELIMITER ;
 
 -- 5)
-CREATE FUNCTION ;
+-- function pour calculer le pourcentage de clients qui remplie une session
+DELIMITER //
+CREATE FUNCTION taux_remplissage(seance_id INT)
+RETURNS DECIMAL(5, 2)
+DETERMINISTIC
+BEGIN
+    DECLARE taux DECIMAL(5, 2);
+
+    SELECT (place_disponible / place_maximum) * 100
+    INTO taux
+    FROM Seances
+    WHERE Id = seance_id;
+
+    RETURN 100 - taux;
+END;
+//
+DELIMITER ;
 
 -- -----------------------------------------------------------------------
 
