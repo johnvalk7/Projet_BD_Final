@@ -434,10 +434,20 @@ CREATE PROCEDURE creer_seance(
     IN place_maximum INT
 )
 BEGIN
+
+
     DECLARE place_disponible INT;
 
     -- Définir le nombre de places disponibles
     SET place_disponible = place_maximum;
+
+    IF NOT EXISTS (
+        SELECT 1 FROM activites
+        WHERE nom = nom_activite
+    ) THEN
+        SIGNAL SQLSTATE '23000' SET message_text ='aucune activiter avec ce nom';
+
+    END IF;
 
     -- Insérer la nouvelle séance
     INSERT INTO Seances (date, heure, place_disponible, place_maximum, nom_activite)
@@ -621,7 +631,7 @@ DELIMITER ;
 
 -- 2) 46000 utiliser dans une procedure stoquer
 
--- 3)
+-- 3) 23000 dans la procedure 23000
 
 
 
