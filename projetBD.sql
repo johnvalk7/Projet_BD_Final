@@ -271,15 +271,15 @@ SELECT
     CONCAT(c.nom, ' ', c.prenom) AS nom_complet,
     COUNT(i.id_seance) AS nb_seances
 FROM Inscription i
-JOIN Clients c ON i.id_clients = c.Id
+         JOIN Clients c ON i.id_clients = c.Id
 GROUP BY i.id_clients, c.nom, c.prenom
 HAVING COUNT(i.id_seance) = (
     SELECT MAX(total_seances)
     FROM (
-        SELECT COUNT(id_seance) AS total_seances
-        FROM Inscription
-        GROUP BY id_clients
-    ) AS sous_requete
+             SELECT COUNT(id_seance) AS total_seances
+             FROM Inscription
+             GROUP BY id_clients
+         ) AS sous_requete
 );
 
 -- • Trouver le prix moyen par activité pour chaque participant
@@ -290,9 +290,9 @@ SELECT
     s.nom_activite,
     AVG(a.prix_clients) AS prix_moyen
 FROM Inscription i
-JOIN Seances s ON i.id_seance = s.Id
-JOIN Activites a ON s.nom_activite = a.nom
-JOIN Clients c ON i.id_clients = c.Id
+         JOIN Seances s ON i.id_seance = s.Id
+         JOIN Activites a ON s.nom_activite = a.nom
+         JOIN Clients c ON i.id_clients = c.Id
 GROUP BY i.id_clients, c.nom, c.prenom, s.nom_activite;
 
 
@@ -304,21 +304,22 @@ SELECT
     CONCAT(c.nom, ' ', c.prenom) AS participant,
     i.rating AS note_appreciation
 FROM Inscription i
-JOIN Seances s ON i.id_seance = s.Id
-JOIN Activites a ON s.nom_activite = a.nom
-JOIN Clients c ON i.id_clients = c.Id
-WHERE i.rating IS NOT NULL;
+         JOIN Seances s ON i.id_seance = s.Id
+         JOIN Activites a ON s.nom_activite = a.nom
+         JOIN Clients c ON i.id_clients = c.Id
+WHERE i.rating IS NOT NULL
+GROUP BY a.nom;
 
 -- • Affiche la moyenne des notes d’appréciations pour toutes les activités
 CREATE VIEW moyenne_note_activite AS
 SELECT
-    a.nom AS nom_activite,
+   'Toutes les activité',
     AVG(i.rating) AS moyenne_note
 FROM Inscription i
-JOIN Seances s ON i.id_seance = s.Id
-JOIN Activites a ON s.nom_activite = a.nom
+         JOIN Seances s ON i.id_seance = s.Id
+         JOIN Activites a ON s.nom_activite = a.nom
 WHERE i.rating IS NOT NULL
-GROUP BY a.nom;
+;
 
 -- • Afficher le nombre de participant pour chaque activité
 CREATE VIEW nb_participant_activite AS
@@ -326,27 +327,33 @@ SELECT
     a.nom AS nom_activite,
     COUNT(DISTINCT i.id_clients) AS nombre_participants
 FROM Inscription i
-JOIN Seances s ON i.id_seance = s.Id
-JOIN Activites a ON s.nom_activite = a.nom
+         JOIN Seances s ON i.id_seance = s.Id
+         JOIN Activites a ON s.nom_activite = a.nom
 GROUP BY a.nom;
 
 -- • Afficher le nombre de participant moyen pour chaque mois
+
+
 CREATE VIEW nb_moyen_participant_par_mois AS
 SELECT
-    MONTH(participants_par_seance.date) AS mois,
-    YEAR(participants_par_seance.date) AS annee,
-    AVG(participants_par_seance.nb_participants) AS nb_moyen_participants
+    mois,
+    AVG(total_participants) AS moyenne_participants
 FROM (
-    SELECT
-        s.Id AS id_seance,
-        COUNT(DISTINCT i.id_clients) AS nb_participants,
-        s.date
-    FROM Inscription i
-    JOIN Seances s ON i.id_seance = s.Id
-    GROUP BY s.Id, s.date
-) AS participants_par_seance
-GROUP BY YEAR(participants_par_seance.date), MONTH(participants_par_seance.date)
-ORDER BY annee, mois;
+         SELECT
+             DATE_FORMAT(S.date,'%M') AS mois,
+             YEAR(S.date) AS annee,
+             COUNT(I.id_clients) AS total_participants
+         FROM
+             Seances S
+                 JOIN
+             Inscription I ON S.Id = I.id_seance
+         GROUP BY
+             annee, mois
+     ) AS sous_requete
+GROUP BY
+    mois
+ORDER BY
+    mois;
 
 
 -- -----------------------------------------------------------------------
