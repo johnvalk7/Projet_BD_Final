@@ -386,6 +386,20 @@ CREATE PROCEDURE supprimer_participant_seance(
     IN id_seance INT
 )
 BEGIN
+
+
+    -- Vérifier si l'inscription existe
+    IF NOT EXISTS (
+        SELECT 1 FROM Inscription
+        WHERE id_clients = id_client AND id_seance = id_seance
+    ) THEN
+        SIGNAL SQLSTATE '46000' SET message_text ='aucune inscription trouver';
+
+    END IF;
+
+    -- Démarrer une transaction
+    START TRANSACTION;
+
     -- Supprimer l'inscription du participant
     DELETE FROM Inscription
     WHERE id_clients = id_client AND id_seance = id_seance;
@@ -394,6 +408,9 @@ BEGIN
     UPDATE Seances
     SET place_disponible = place_disponible + 1
     WHERE Id = id_seance;
+
+    -- Confirmer la transaction
+    COMMIT;
 
     SELECT 'Participant supprimé avec succès.' AS message;
 END //
@@ -595,7 +612,7 @@ DELIMITER ;
 
 -- 1) 45000 à été utilisé dans un trigger
 
--- 2)
+-- 2) 46000 utiliser dans une procedure stoquer
 
 -- 3)
 
