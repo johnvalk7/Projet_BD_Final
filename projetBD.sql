@@ -368,6 +368,11 @@ BEGIN
     INSERT INTO Inscription (id_clients, id_seance)
     VALUES (id_client, id_seance);
 
+     -- Mettre à jour le nombre de places disponibles
+    UPDATE Seances
+    SET place_disponible = place_disponible - 1
+    WHERE Id = id_seance;
+
     SELECT 'Participant ajouté avec succès.' AS message;
 END //
 
